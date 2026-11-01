@@ -10,7 +10,8 @@ import {
   Radio,
   Download,
   Upload,
-  Settings2
+  Settings2,
+  FileBox
 } from 'lucide-react';
 import { SynthTarget, Performance } from '../types/synth';
 import { midiService } from '../services/midiService';
@@ -149,6 +150,16 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
 
       {/* Right Action Tools: MIDI, Audition, Panic, Backup */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Open .X7U, .X7L, .X7A file button */}
+        <button
+          onClick={onImportLibrary}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-neutral-800/80 hover:bg-neutral-800 border border-neutral-700/60 text-xs font-semibold text-cyan-300 transition-colors"
+          title="Importar e gerenciar arquivos .X7U, .X7L ou .X7A do Yamaha Montage / MODX"
+        >
+          <FileBox className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden xl:inline">Arquivo .X7U / .X7L</span>
+        </button>
+
         {/* Real-time MIDI Status button */}
         <button
           onClick={onOpenMidiModal}

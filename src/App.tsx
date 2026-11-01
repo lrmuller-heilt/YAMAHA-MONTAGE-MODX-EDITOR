@@ -25,6 +25,8 @@ import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { MidiModal } from './components/MidiModal';
 import { SplitWizardModal } from './components/SplitWizardModal';
 import { LayerWizardModal } from './components/LayerWizardModal';
+import { YamahaFileModal } from './components/YamahaFileModal';
+import { YamahaArchive, yamahaFileService } from './services/yamahaFileService';
 
 export default function App() {
   const [currentTarget, setCurrentTarget] = useState<SynthTarget>('MONTAGE_M');
@@ -61,6 +63,7 @@ export default function App() {
   const [isMidiModalOpen, setIsMidiModalOpen] = useState(false);
   const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
   const [isLayerWizardOpen, setIsLayerWizardOpen] = useState(false);
+  const [loadedArchive, setLoadedArchive] = useState<YamahaArchive | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -287,30 +290,48 @@ export default function App() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.performances && Array.isArray(parsed.performances)) {
-          setPerformances(parsed.performances);
-          if (parsed.performances[0]) {
-            setActivePerformanceId(parsed.performances[0].id);
-          }
-        }
-        if (parsed.liveSetPages && Array.isArray(parsed.liveSetPages)) {
-          setLiveSetPages(parsed.liveSetPages);
-        }
-        alert('Biblioteca importada com sucesso!');
-      } catch (err) {
-        alert('Falha ao processar arquivo de backup. Formato inválido.');
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const archive = await yamahaFileService.parseFile(file);
+      setLoadedArchive(archive);
+    } catch (err) {
+      console.error('File parse error:', err);
+      alert('Erro ao processar arquivo: ' + String(err));
+    }
     e.target.value = '';
+  };
+
+  const handleOpenDemoArchive = (type: 'X7U' | 'X7L' | 'X7A') => {
+    const demo = yamahaFileService.createDemoArchive(type);
+    setLoadedArchive(demo);
+  };
+
+  const handleImportSelectedPerformances = (selected: Performance[], replaceAll: boolean) => {
+    if (replaceAll) {
+      setPerformances(selected);
+      if (selected[0]) {
+        setActivePerformanceId(selected[0].id);
+        audioSynth.setPerformance(selected[0]);
+      }
+    } else {
+      setPerformances(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newPerfs = selected.map(p => {
+          if (existingIds.has(p.id)) {
+            return { ...p, id: 'perf-' + Math.random().toString(36).substring(2, 9) };
+          }
+          return p;
+        });
+        return [...newPerfs, ...prev];
+      });
+      if (selected[0]) {
+        setActivePerformanceId(selected[0].id);
+        audioSynth.setPerformance(selected[0]);
+      }
+    }
   };
 
   const toggleMuteAudio = () => {
@@ -321,12 +342,12 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
-      {/* Hidden file input for backup imports */}
+      {/* Hidden file input supporting .X7L, .X7U, .X7A and .JSON */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept=".json"
+        accept=".x7l,.x7u,.x7a,.X7L,.X7U,.X7A,.x8l,.x8u,.x8a,.X8L,.X8U,.X8A,.json"
         className="hidden"
       />
 
@@ -373,6 +394,7 @@ export default function App() {
             onOpenLayerWizard={() => setIsLayerWizardOpen(true)}
             onExportLibrary={handleExportLibrary}
             onImportLibrary={handleImportLibraryClick}
+            onOpenDemoArchive={handleOpenDemoArchive}
             currentTarget={currentTarget}
           />
         )}
@@ -425,6 +447,15 @@ export default function App() {
           target={currentTarget}
           onApplyLayer={handleApplyLayer}
           onClose={() => setIsLayerWizardOpen(false)}
+        />
+      )}
+
+      {loadedArchive && (
+        <YamahaFileModal
+          archive={loadedArchive}
+          currentTarget={currentTarget}
+          onImportSelectedToLibrary={handleImportSelectedPerformances}
+          onClose={() => setLoadedArchive(null)}
         />
       )}
     </div>

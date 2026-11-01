@@ -20,7 +20,8 @@ import {
   Square as SquareOutline,
   RotateCcw,
   Sparkles,
-  Music
+  Music,
+  FileBox
 } from 'lucide-react';
 import { Performance, Category, SynthTarget } from '../types/synth';
 import { ALL_CATEGORIES } from '../data/presetPerformances';
@@ -40,6 +41,7 @@ interface PerformanceBrowserProps {
   onOpenLayerWizard: () => void;
   onExportLibrary: () => void;
   onImportLibrary: () => void;
+  onOpenDemoArchive?: (type: 'X7U' | 'X7L' | 'X7A') => void;
   currentTarget: SynthTarget;
   onRestorePerformance?: (perf: Performance) => void;
 }
@@ -57,6 +59,7 @@ export const PerformanceBrowser: React.FC<PerformanceBrowserProps> = ({
   onOpenLayerWizard,
   onExportLibrary,
   onImportLibrary,
+  onOpenDemoArchive,
   currentTarget,
   onRestorePerformance
 }) => {
@@ -333,20 +336,40 @@ export const PerformanceBrowser: React.FC<PerformanceBrowserProps> = ({
 
           <div className="h-4 w-[1px] bg-neutral-800 mx-1" />
 
+          {/* Import / Open .X7U, .X7L, .X7A Yamaha file */}
+          <button
+            onClick={onImportLibrary}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-cyan-300 text-xs font-semibold border border-cyan-800/60 transition-colors shadow-sm"
+            title="Importar e gerenciar arquivos .X7U, .X7L e .X7A do Yamaha Montage / MODX"
+          >
+            <FileBox className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline">Abrir</span>
+            <span>.X7U / .X7L / .X7A</span>
+          </button>
+
+          {/* Demo files quick test buttons */}
+          {onOpenDemoArchive && (
+            <div className="hidden lg:flex items-center gap-1 bg-neutral-950 p-0.5 rounded-lg border border-neutral-800 text-[11px]">
+              <span className="text-neutral-500 px-1 font-mono">Demos:</span>
+              {(['X7U', 'X7L', 'X7A'] as const).map(demoType => (
+                <button
+                  key={demoType}
+                  onClick={() => onOpenDemoArchive(demoType)}
+                  className="px-1.5 py-0.5 rounded font-mono font-bold text-neutral-400 hover:text-cyan-300 hover:bg-neutral-800 transition-colors"
+                  title={`Testar importação e edição com um arquivo de exemplo .${demoType.toLowerCase()}`}
+                >
+                  .{demoType}
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={onExportLibrary}
             className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white border border-neutral-700 transition-colors"
             title="Exportar biblioteca de patches (.json / backup)"
           >
             <Download className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onImportLibrary}
-            className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white border border-neutral-700 transition-colors"
-            title="Importar biblioteca de patches"
-          >
-            <Upload className="w-4 h-4" />
           </button>
         </div>
       </div>
