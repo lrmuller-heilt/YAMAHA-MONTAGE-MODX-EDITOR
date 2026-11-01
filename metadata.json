@@ -1,0 +1,6 @@
+{
+  "name": "Montage Studio - Synth & Performance Editor",
+  "description": "Editor e gerenciador rápido de performances e patches para Yamaha MODX, MONTAGE, MONTAGE M e Montage ESP com controle MIDI em tempo real e sintetizador virtual.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
